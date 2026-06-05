@@ -10,11 +10,15 @@ class Page():
         self.arrivalTime = None
         self.accessCount = 0
         self.mostRecentAccess = None
+    def updateData(self, counter):
+        self.arrivalTime = counter
+        self.accessCount += 1
+        self.mostRecentAccess = counter
 
 class VRAM():
     def __init__(self,size: int = 16):
         self.size = size #max amount of pages loaded at once
-        self.pages = numpy.empty(self.size, dtype=Page) #array of pages
+        self.pages = [None]*self.size #array of pages
 
 class HardDrive():
     def __init__(self, requiredMem: int, pages: list, refs: list):
@@ -27,24 +31,29 @@ class MMU():
     def __init__(self):
         self.vram = VRAM()
         self.disk = HardDrive()
+
     def pageCheckOK(self, pageID):
         for page in self.vram.pages:
             if pageID == page.page_number: return True # if page is loaded into memory, page check OK
         return False # else - page fault
+
     def pageToRemove(self): # select frame to free from memory
         for i in range(len(self.vram.pages)):
             if self.vram.pages[i] == None:
                 return i # by default return address of the first empty memory frame
         else: return numpy.random.randint(self.vram.size-1) # if no frames are empty, return random address
+
     def removePage(self):
         index = self.pageToRemove()
         self.vram.pages[index].reset()
         self.vram.pages[index]=None
         return index
+
     def loadPage(self, pageID):
         index = self.pageToRemove()
         self.vram.pages[index] = self.disk.processPages[pageID]
         return index
+
     def run(self):
         counter = 0
         while counter < self.disk.nProc:
@@ -53,3 +62,11 @@ class MMU():
                 print(f"""Frame {self.removePage()} released""")
             print(f"""Loaded Page {pageID} into frame {self.loadPage(pageID)}""")
             counter +=1
+
+class FIFO(MMU):
+    def __init__(self):
+        super().__init__()
+    def pageToRemove(self):
+        arrivalTimes = {}
+        [arrivalTimes.update({page.arrivalTime : page}) for page in self.vram.pages]
+        return self.vram.pages.index(arrivalTimes[min(arrivalTimes.keys)])
