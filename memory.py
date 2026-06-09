@@ -43,6 +43,9 @@ def generateReferences(
               "shiftEvery":shiftEvery}
     return procInfo
 
+def generatePages(n: int=20):
+    return [Page(i) for i in range(n)]
+
 class Page():
     def __init__(self, page_number: int):
         self.page_number = page_number
