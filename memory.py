@@ -1,11 +1,11 @@
 import random
 
 def generateReferences(
-    totalPages: int=20,       # number of pages used by a process
+    totalPages: int=50,       # number of pages used by a process
     workingSetSize:int=4,   # number of pages working at once - same as VRAM.size
-    nRefs: int=100,     # total number of page refferences
-    localityWeight:float=0.7,  # chance of reference to a page in working set
-    spatialWeight: float=0.15,  # chance of reference to a page outside of working set
+    nRefs: int=300,     # total number of page refferences
+    localityWeight:float=0.6,  # chance of reference to a page in working set
+    spatialWeight: float=0.2,  # chance of reference to a page outside of working set
     shiftEvery: int=20,       # how many refs before working set shifts
 ):
     working_set = random.sample(range(totalPages), workingSetSize)
@@ -49,13 +49,13 @@ def generatePages(n: int=20):
 class Page():
     def __init__(self, page_number: int):
         self.page_number = page_number
-        self.arrivalTime = None
+        self.arrivalTime = 0
         self.accessCount = 0
-        self.mostRecentAccess = None
+        self.mostRecentAccess = 0
     def reset(self):
-        self.arrivalTime = None
+        self.arrivalTime = 0
         self.accessCount = 0
-        self.mostRecentAccess = None
+        self.mostRecentAccess = 0
     def updateData(self, counter):
         self.arrivalTime = counter
         self.accessCount += 1
@@ -78,6 +78,7 @@ class MMU():
         self.vram = vram
         self.disk = drive
         self.pageFaultCount = 0
+        self.counter = 0
 
     def pageCheckOK(self, pageID):
         for page in self.vram.pages:
@@ -103,17 +104,17 @@ class MMU():
     def loadPage(self, pageID):
         index = self.pageToRemove()
         self.vram.pages[index] = self.disk.processPages[pageID]
+        self.vram.pages[index].updateData(self.counter)
         return index
 
     def run(self):
         self.loadPage(self.disk.pageRefferences[0])
-        counter = 0
-        while counter < self.disk.nProc:
-            pageID = self.disk.pageRefferences[counter]
+        while self.counter < self.disk.nProc:
+            pageID = self.disk.pageRefferences[self.counter]
             if not self.pageCheckOK(pageID):
                 print(f"""Frame {self.removePage()} released""")
             print(f"""Loaded Page {pageID} into frame {self.loadPage(pageID)}""")
-            counter +=1
+            self.counter +=1
         print(f"---\nPage fault count: {self.pageFaultCount}")
 
 class FIFO(MMU):
@@ -122,8 +123,9 @@ class FIFO(MMU):
     def pageToRemove(self):
         arrivalTimes = {}
         for page in self.vram.pages:
-            if page is not None:
-                arrivalTimes.update({page.arrivalTime : page})
+            if page is None:
+                return self.vram.pages.index(page)
+            arrivalTimes.update({page.arrivalTime : page})
         try:
             return self.vram.pages.index(arrivalTimes[min(arrivalTimes.keys())])
         except ValueError:
@@ -135,8 +137,9 @@ class LRU(MMU):
     def pageToRemove(self):
         recentAccessTimes = {}
         for page in self.vram.pages:
-            if page is not None:
-                recentAccessTimes.update({page.mostRecentAccess : page})
+            if page is None:
+                return self.vram.pages.index(page)
+            recentAccessTimes.update({page.mostRecentAccess : page})
         try:
             return self.vram.pages.index(recentAccessTimes[min(recentAccessTimes.keys())])
         except ValueError:
