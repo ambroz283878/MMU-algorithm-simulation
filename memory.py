@@ -77,17 +77,22 @@ class MMU():
     def __init__(self, vram: VRAM, drive: HardDrive):
         self.vram = vram
         self.disk = drive
+        self.pageFaultCount = 0
 
     def pageCheckOK(self, pageID):
         for page in self.vram.pages:
-            if pageID == page.page_number: return True # if page is loaded into memory, page check OK
-        return False # else - page fault
+            if page == None:
+                return True
+            elif pageID == page.page_number: return True # if page is loaded into memory, page check OK
+        # else - page fault
+        self.pageFaultCount += 1
+        return False
 
     def pageToRemove(self): # select frame to free from memory
         for i in range(len(self.vram.pages)):
             if self.vram.pages[i] == None:
                 return i # by default return address of the first empty memory frame
-        else: return random.randint(self.vram.size-1) # if no frames are empty, return random address
+        else: return random.randint(0,self.vram.size-1) # if no frames are empty, return random address
 
     def removePage(self):
         index = self.pageToRemove()
@@ -101,6 +106,7 @@ class MMU():
         return index
 
     def run(self):
+        self.loadPage(self.disk.pageRefferences[0])
         counter = 0
         while counter < self.disk.nProc:
             pageID = self.disk.pageRefferences[counter]
