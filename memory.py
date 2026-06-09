@@ -4,8 +4,8 @@ def generate_references(
     totalPages: int=20,       # number of pages used by a process
     workingSetSize:int=4,   # number of pages working at once - same as VRAM.size
     nRefs: int=100,     # total number of page refferences
-    localityWeight:float=0.7,  # chance of refference to a page in working set
-    spatialWeight: float=0.15,  # chance of refference to a page outside of working set
+    localityWeight:float=0.7,  # chance of reference to a page in working set
+    spatialWeight: float=0.15,  # chance of reference to a page outside of working set
     shiftEvery: int=20,       # how many refs before working set shifts
 ):
     working_set = random.sample(range(totalPages), workingSetSize)
@@ -36,9 +36,12 @@ def generate_references(
 
     procInfo={"totalPages":totalPages,
               "workingSetSize":workingSetSize,
-              "nRefs":nRefs}
-
-    return references
+              "nRefs":nRefs,
+              "references": references,
+              "localityWeight":localityWeight,
+              "spatialWeight":spatialWeight,
+              "shiftEvery":shiftEvery}
+    return procInfo
 
 class Page():
     def __init__(self, page_number: int):
