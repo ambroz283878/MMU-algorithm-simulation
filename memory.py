@@ -123,3 +123,12 @@ class FIFO(MMU):
         arrivalTimes = {}
         [arrivalTimes.update({page.arrivalTime : page}) for page in self.vram.pages]
         return self.vram.pages.index(arrivalTimes[min(arrivalTimes.keys)])
+
+class LRU(MMU):
+    def __init__(self):
+        super().__init__()
+    def pageToRemove(self):
+        recentAccessTimes = {}
+        [recentAccessTimes.update({page.mostRecentAccess : page}) for page in self.vram.pages]
+        return self.vram.pages.index(recentAccessTimes[min(recentAccessTimes.keys)])
+    
