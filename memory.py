@@ -60,11 +60,21 @@ class Page():
         self.arrivalTime = counter
         self.accessCount += 1
         self.mostRecentAccess = counter
+    def updateAccessTime(self, counter):
+        self.mostRecentAccess = counter
 
 class VRAM():
     def __init__(self,size: int = 16):
         self.size = size # max amount of pages loaded at once
         self.pages = [None]*self.size # array of pages
+    def findPageByID(self,id):
+        for i in range(len(self.pages)):
+            try:
+                if self.pages[i].page_number==id:
+                    return i
+            except AttributeError:
+                pass
+        return None
 
 class HardDrive():
     def __init__(self, requiredMem: int, pages: list, refs: list):
@@ -82,9 +92,8 @@ class MMU():
 
     def pageCheckOK(self, pageID):
         for page in self.vram.pages:
-            if page == None:
-                return True
-            elif pageID == page.page_number: return True # if page is loaded into memory, page check OK
+            if page is not None and pageID == page.page_number: 
+                return True # if page is loaded into memory, page check OK  
         # else - page fault
         self.pageFaultCount += 1
         return False
@@ -97,24 +106,36 @@ class MMU():
 
     def removePage(self):
         index = self.pageToRemove()
-        self.vram.pages[index].reset()
-        self.vram.pages[index]=None
+        if self.vram.pages[index] is not None:
+            self.vram.pages[index].reset()
+            self.vram.pages[index]=None
         return index
 
-    def loadPage(self, pageID):
-        index = self.pageToRemove()
-        self.vram.pages[index] = self.disk.processPages[pageID]
-        self.vram.pages[index].updateData(self.counter)
+    def loadPage(self, pageID, mode):
+        if mode == "LOAD":
+            index = self.pageToRemove()
+            self.vram.pages[index] = self.disk.processPages[pageID]
+            self.vram.pages[index].updateData(self.counter)
+        else:
+            index = self.vram.findPageByID(pageID)
+            if index is not None:
+                self.vram.pages[index].updateAccessTime(self.counter)
+            else:
+                return None
         return index
 
     def run(self):
-        self.loadPage(self.disk.pageRefferences[0])
         while self.counter < self.disk.nProc:
             pageID = self.disk.pageRefferences[self.counter]
             if not self.pageCheckOK(pageID):
                 print(f"""Frame {self.removePage()} released""")
-            print(f"""Loaded Page {pageID} into frame {self.loadPage(pageID)}""")
+                frameID=self.loadPage(pageID, "LOAD")
+            else:
+                frameID=self.loadPage(pageID,"UPDATE")
+            print(f"""Loaded Page {pageID} into frame {frameID}""")
             self.counter +=1
+            if frameID is not None:
+                self.vram.pages[frameID].updateAccessTime(self.counter)
         print(f"---\nPage fault count: {self.pageFaultCount}")
 
 class FIFO(MMU):
