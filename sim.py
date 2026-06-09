@@ -1,5 +1,6 @@
 import memory
 import json
+import sys
 
 path="procInfo.json"
 with open(path, "r") as file:
@@ -10,12 +11,16 @@ pageNum = procInfo["totalPages"]
 nRefs = procInfo["nRefs"]
 refs = procInfo["references"]
 
-vram = memory.VRAM()
+vram = memory.VRAM(ramSize)
 drive = memory.HardDrive(ramSize,memory.generatePages(pageNum), refs)
 
 memoryManagementUnit=memory.MMU(vram,drive)
 
-mode = input("Wybierz algorytm (FIFO/LRU/random)")
+try:
+    mode = sys.argv[1]
+except IndexError:
+    mode = input("Wybierz algorytm (FIFO/LRU/random):\n-> ")
+
 if mode not in ["FIFO","LRU","random"]:
     print(f"Nieznany algorytm ({mode})")
     exit
