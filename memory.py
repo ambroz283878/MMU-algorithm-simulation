@@ -114,6 +114,7 @@ class MMU():
                 print(f"""Frame {self.removePage()} released""")
             print(f"""Loaded Page {pageID} into frame {self.loadPage(pageID)}""")
             counter +=1
+        print(f"---\nPage fault count: {self.pageFaultCount}")
 
 class FIFO(MMU):
     def __init__(self):
