@@ -1,6 +1,6 @@
 import random
 
-def generate_references(
+def generateReferences(
     totalPages: int=20,       # number of pages used by a process
     workingSetSize:int=4,   # number of pages working at once - same as VRAM.size
     nRefs: int=100,     # total number of page refferences
@@ -71,9 +71,9 @@ class HardDrive():
         self.nProc = len(self.pageRefferences)
 
 class MMU():
-    def __init__(self):
-        self.vram = VRAM()
-        self.disk = HardDrive()
+    def __init__(self, vram: VRAM, drive: HardDrive):
+        self.vram = vram
+        self.disk = drive
 
     def pageCheckOK(self, pageID):
         for page in self.vram.pages:
