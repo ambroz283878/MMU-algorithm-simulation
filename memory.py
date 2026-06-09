@@ -4,9 +4,9 @@ def generateReferences(
     totalPages: int=50,       # number of pages used by a process
     workingSetSize:int=4,   # number of pages working at once - same as VRAM.size
     nRefs: int=300,     # total number of page refferences
-    localityWeight:float=0.6,  # chance of reference to a page in working set
-    spatialWeight: float=0.2,  # chance of reference to a page outside of working set
-    shiftEvery: int=20,       # how many refs before working set shifts
+    localityWeight:float=0.75,  # chance of reference to a page in working set
+    spatialWeight: float=0.1,  # chance of reference to a page near outside of working set
+    shiftEvery: int=50,       # how many refs before working set shifts
 ):
     working_set = random.sample(range(totalPages), workingSetSize)
     references = []
