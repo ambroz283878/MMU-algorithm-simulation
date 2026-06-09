@@ -117,18 +117,28 @@ class MMU():
         print(f"---\nPage fault count: {self.pageFaultCount}")
 
 class FIFO(MMU):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, vram: VRAM, drive: HardDrive):
+        super().__init__(vram,drive)
     def pageToRemove(self):
         arrivalTimes = {}
-        [arrivalTimes.update({page.arrivalTime : page}) for page in self.vram.pages]
-        return self.vram.pages.index(arrivalTimes[min(arrivalTimes.keys)])
+        for page in self.vram.pages:
+            if page is not None:
+                arrivalTimes.update({page.arrivalTime : page})
+        try:
+            return self.vram.pages.index(arrivalTimes[min(arrivalTimes.keys())])
+        except ValueError:
+            return 0
 
 class LRU(MMU):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, vram: VRAM, drive: HardDrive):
+        super().__init__(vram,drive)
     def pageToRemove(self):
         recentAccessTimes = {}
-        [recentAccessTimes.update({page.mostRecentAccess : page}) for page in self.vram.pages]
-        return self.vram.pages.index(recentAccessTimes[min(recentAccessTimes.keys)])
+        for page in self.vram.pages:
+            if page is not None:
+                recentAccessTimes.update({page.mostRecentAccess : page})
+        try:
+            return self.vram.pages.index(recentAccessTimes[min(recentAccessTimes.keys())])
+        except ValueError:
+            return 0
     
