@@ -1,4 +1,45 @@
 import numpy
+import random
+
+def generate_references(
+    totalPages: int=20,       # number of pages used by a process
+    workingSetSize:int=4,   # number of pages working at once - same as VRAM.size
+    nRefs: int=100,     # total number of page refferences
+    localityWeight:float=0.7,  # chance of refference to a page in working set
+    spatialWeight: float=0.15,  # chance of refference to a page outside of working set
+    shiftEvery: int=20,       # how many refs before working set shifts
+):
+    working_set = random.sample(range(totalPages), workingSetSize)
+    references = []
+    last_page = working_set[0]
+
+    for i in range(nRefs):
+        if i > 0 and i % shiftEvery == 0:
+            keep = random.sample(working_set, workingSetSize // 2)
+            new_pages = random.sample(
+                [p for p in range(totalPages) if p not in keep],
+                workingSetSize - len(keep)
+            )
+            working_set = keep + new_pages
+
+        roll = random.random()
+
+        if roll < localityWeight:
+            page = random.choice(working_set) # choose a page from working set
+        elif roll < localityWeight + spatialWeight:
+            offset = random.choice([-1, 1]) # choose a page near the last used page
+            page = max(0, min(totalPages - 1, last_page + offset)) # min() to prevent indexError
+        else:
+            page = random.randint(0, totalPages - 1) # chose a random page
+
+        references.append(page)
+        last_page = page
+
+    procInfo={"totalPages":totalPages,
+              "workingSetSize":workingSetSize,
+              "nRefs":nRefs}
+
+    return references
 
 class Page():
     def __init__(self, page_number: int):
@@ -17,8 +58,8 @@ class Page():
 
 class VRAM():
     def __init__(self,size: int = 16):
-        self.size = size #max amount of pages loaded at once
-        self.pages = [None]*self.size #array of pages
+        self.size = size # max amount of pages loaded at once
+        self.pages = [None]*self.size # array of pages
 
 class HardDrive():
     def __init__(self, requiredMem: int, pages: list, refs: list):
@@ -41,7 +82,7 @@ class MMU():
         for i in range(len(self.vram.pages)):
             if self.vram.pages[i] == None:
                 return i # by default return address of the first empty memory frame
-        else: return numpy.random.randint(self.vram.size-1) # if no frames are empty, return random address
+        else: return random.randint(self.vram.size-1) # if no frames are empty, return random address
 
     def removePage(self):
         index = self.pageToRemove()
