@@ -2,8 +2,8 @@ import memory
 import json
 import sys
 
-path="procInfo.json"
-with open(path, "r") as file:
+path="procInfo.json" # data file path
+with open(path, "r") as file: # load data from file
     procInfo=json.load(file)
 
 ramSize = procInfo["workingSetSize"]
@@ -11,13 +11,12 @@ pageNum = procInfo["totalPages"]
 nRefs = procInfo["nRefs"]
 refs = procInfo["references"]
 
-vram = memory.VRAM(ramSize)
-drive = memory.HardDrive(ramSize,memory.generatePages(pageNum), refs)
-
-memoryManagementUnit=memory.MMU(vram,drive)
+vram = memory.VRAM(ramSize) # create vram
+drive = memory.HardDrive(ramSize,memory.generatePages(pageNum), refs) # create hard drive
+memoryManagementUnit=memory.MMU(vram,drive) # create MMU
 
 try:
-    mode = sys.argv[1]
+    mode = sys.argv[1] # if provided, try to set mode to first argument
 except IndexError:
     mode = input("Wybierz algorytm (FIFO/LRU/random):\n-> ")
 
@@ -32,4 +31,4 @@ match mode:
     case "random":
         memoryManagementUnit=memory.MMU(vram,drive)
 
-memoryManagementUnit.run()
+memoryManagementUnit.run() # run simulation

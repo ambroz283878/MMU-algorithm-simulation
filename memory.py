@@ -48,19 +48,19 @@ def generatePages(n: int=20):
 
 class Page():
     def __init__(self, page_number: int):
-        self.page_number = page_number
+        self.page_number = page_number # page identifier
+        self.arrivalTime = 0 # time of arrival to memory
+        self.accessCount = 0 # (duh)
+        self.mostRecentAccess = 0 # when page was last accessed
+    def reset(self): # (duh)
         self.arrivalTime = 0
         self.accessCount = 0
         self.mostRecentAccess = 0
-    def reset(self):
-        self.arrivalTime = 0
-        self.accessCount = 0
-        self.mostRecentAccess = 0
-    def updateData(self, counter):
+    def updateData(self, counter): # (duh)
         self.arrivalTime = counter
         self.accessCount += 1
         self.mostRecentAccess = counter
-    def updateAccessTime(self, counter):
+    def updateAccessTime(self, counter): # (duh)
         self.mostRecentAccess = counter
 
 class VRAM():
@@ -76,21 +76,21 @@ class VRAM():
                 pass
         return None
 
-class HardDrive():
+class HardDrive(): # program on disk
     def __init__(self, requiredMem: int, pages: list, refs: list):
-        self.requiredMemory = requiredMem
-        self.processPages = pages
-        self.pageRefferences = refs
-        self.nProc = len(self.pageRefferences)
+        self.requiredMemory = requiredMem # how many pages need to be loaded at once
+        self.processPages = pages # array of Page objects
+        self.pageRefferences = refs # array of references - order in which pages ought to be loaded into memory
+        self.nProc = len(self.pageRefferences) # number of page references
 
 class MMU():
     def __init__(self, vram: VRAM, drive: HardDrive):
-        self.vram = vram
-        self.disk = drive
-        self.pageFaultCount = 0
-        self.counter = 0
+        self.vram = vram # pass VRAM object to MMU
+        self.disk = drive # pass HardDrive object to MMU
+        self.pageFaultCount = 0 # count how many times referenced page was not in memory
+        self.counter = 0 # tick number
 
-    def pageCheckOK(self, pageID):
+    def pageCheckOK(self, pageID): # check for page fault
         for page in self.vram.pages:
             if page is not None and pageID == page.page_number: 
                 return True # if page is loaded into memory, page check OK  
@@ -104,7 +104,7 @@ class MMU():
                 return i # by default return address of the first empty memory frame
         else: return random.randint(0,self.vram.size-1) # if no frames are empty, return random address
 
-    def removePage(self):
+    def removePage(self): # remove page from memory
         index = self.pageToRemove()
         if self.vram.pages[index] is not None:
             self.vram.pages[index].reset()
@@ -112,11 +112,11 @@ class MMU():
         return index
 
     def loadPage(self, pageID, mode):
-        if mode == "LOAD":
+        if mode == "LOAD": # if page is not present - load page into memory
             index = self.pageToRemove()
             self.vram.pages[index] = self.disk.processPages[pageID]
             self.vram.pages[index].updateData(self.counter)
-        else:
+        else: # if a page is present - update most recent access
             index = self.vram.findPageByID(pageID)
             if index is not None:
                 self.vram.pages[index].updateAccessTime(self.counter)
@@ -128,11 +128,11 @@ class MMU():
         while self.counter < self.disk.nProc:
             pageID = self.disk.pageRefferences[self.counter]
             if not self.pageCheckOK(pageID):
-                print(f"""Frame {self.removePage()} released""")
+                #print(f"""Frame {self.removePage()} released""")
                 frameID=self.loadPage(pageID, "LOAD")
             else:
                 frameID=self.loadPage(pageID,"UPDATE")
-            print(f"""Loaded Page {pageID} into frame {frameID}""")
+            #print(f"""Loaded Page {pageID} into frame {frameID}""")
             self.counter +=1
             if frameID is not None:
                 self.vram.pages[frameID].updateAccessTime(self.counter)
